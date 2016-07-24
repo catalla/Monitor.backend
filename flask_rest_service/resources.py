@@ -5,6 +5,7 @@
 
 
 import json
+import datetime
 from flask import request, abort
 from flask.ext import restful
 from flask.ext.restful import reqparse
@@ -14,35 +15,40 @@ from bson.json_util import dumps as Bdumps
 from bson.json_util import loads as Bloads
 
 # Make one class for each type of major request
-class TODO(restful.Resource):
+class Emotions(restful.Resource):
     def __init__(self, *args, **kwargs):
         self.parser = reqparse.RequestParser()
 
-        # Define what arguments to take for a new doc
-        self.parser.add_argument('TODO', type=str, required=True)
-        super(className, self).__init__()
+        # Define what arguments to take for a new emotion entry
+        self.parser.add_argument('uid', type=str, required=True)
+        self.parser.add_argument('mood', type=str, required=True)
+        super(Emotions, self).__init__()
 
-    # Return all collection documents
+    # Return all collection entries
     def get(self):
-        return [x for x in mongo.db.TODOCollection.find()]
+        return [x for x in mongo.db.Emotions.find()]
 
-    # Add a new doc
+    # Add a new emotion entry
     def post(self):
         args = self.parser.parse_args()
 
-        # Create json object from the arguments and add to DB
-        jo = json.loads(args['TODOargname'])
+      	curTime = datetime.datetime.now().isoformat()
 
         # Check whether updating or inserting
         # If the document already exists, update it
-        if (mongo.db.TODOcollname.find_one({"name": jo["name"]}) != None):
-            TODOex_id = (mongo.db.TODOex.find_one({"name": jo["name"]})) ["_id"]
-            mongo.db.TODOcoll.update({"_id": TODOex_id}, jo)
+        if (mongo.db.Emotions.find_one({"uid": args["uid"]}) != None):
+            emotion_journal = (mongo.db.Emotions.find_one({"uid": args["uid"]}))
+            emotion_journal["emotions"].append((args["mood"], curTime))
+            mongo.db.Emotions.update({"uid": args["uid"]}, emotion_journal)
 
         else:
-            TODOex_id = mongo.db.TODOCOll.insert(jo)
+            new_entry = {
+              "uid":      args["uid"],
+              "emotions": [(args["mood"], curTime),]
+            }
+            mongo.db.Emotions.insert(new_entry)
 
-        return mongo.db.TODOcoll.find_one({"_id": TODOex_id})
+        return mongo.db.Emotions.find_one_or_404({"uid": args["uid"]})["_id"]
 
 
 # Use this to give the controller user information based on user ID
@@ -62,10 +68,9 @@ class Register(restful.Resource):
     def __init__(self):
         self.parser = reqparse.RequestParser()
 
-        # Define what arguments to take for a new apartment
+        # Define what arguments to take for a new user
         self.parser.add_argument('username', type=str, required=True)
         self.parser.add_argument('password', type=str, required=True)
-        self.parser.add_argument('phonenum', type=str, required=True)
 
     def get(self):
         return [x for x in mongo.db.Users.find()]
@@ -79,22 +84,12 @@ class Register(restful.Resource):
         user = {
             'username': args['username'],
             'password': args['password'],
-            'workload': 0,
-            'tasks': [],
-            'phonenum': args['phonenum'],
+            'emotions_id': 'none',
+            'periods_id': 'none'
         }
-
-        response = {"validation_code": "000000"} 
-        if (mongo.db.Users.find_one({"phonenum": args['phonenum']}) == None):
-            try:
-                response = twilio_client.caller_ids.validate(args['phonenum'])
-            except:
-                response = {"validation_code": "000000"}
-                print "User did not validate phone number!"
 
         return {
             "_id": mongo.db.Users.insert(user),
-            "confirm": response['validation_code'],
         }
 
 class Login(restful.Resource):
@@ -138,8 +133,7 @@ class Root(restful.Resource):
         }
 
 api.add_resource(Root, '/')
-api.add_resource(ApartmentList, '/TODO_ex/')
-api.add_resource(Task, '/tasks/<ObjectId:TODO_ex_id>')
+api.add_resource(Emotions, '/emotions/')
 api.add_resource(Register, '/register/')
 api.add_resource(Login, '/login/')
 api.add_resource(UserInfo, '/users/<ObjectId:user_id>')

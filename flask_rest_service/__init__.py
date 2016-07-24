@@ -6,7 +6,7 @@ from flask import make_response
 from bson.json_util import dumps
 
 # URL of Mongo Database
-MONGO_URL = #TODO
+MONGO_URL = 'mongodb://monitor_client:1week1@ds029705.mlab.com:29705/heroku_s4pxkw3j'
 
 app = Flask(__name__)
 
