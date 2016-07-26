@@ -6,7 +6,7 @@
  *	to the server.
  */
 
-package com.example.joshua.livetogether;
+//package com.;
 
 import java.io.BufferedReader;
 import java.io.*; 
@@ -18,11 +18,11 @@ import org.json.*;
 /**
  *	Controller class which handles server and app communications
  */
-public class ServerCom
+public class ANDROID_SIDE
 {
 	// Define string constant
-	public static final String HOST = "http://sdchargers.herokuapp.com/";
-
+	public static final String HOST = "http://monitor-server.herokuapp.com/";
+    public static final String NA = "na";
 
 	/**
 	 * This method will take a connection, send args, and return the response
@@ -71,35 +71,66 @@ public class ServerCom
 		catch (Exception e) { throw e; }
 	}
 
+
+
 	/**
-	 * Allow user to sign in and get their User ID
+	 * Allows the user to toggle their period status
 	 */
-	public static String signIn (String username, String password) {
+	public static boolean toggle (String username) {
 		HttpURLConnection connection = null;
 
-		// Define arguments
-		username = "username=" + username;
-		password = "password=" + password;
-
-		String args = username + "&" + password;
+		String args = "toggle";
 
 		try {
 			//Create connection
-			URL url = new URL(HOST + "login/");
+			URL url = new URL(HOST + "users/" + username);
 			connection = (HttpURLConnection)url.openConnection();
 			connection.setRequestMethod("POST");
 	    	connection.setDoOutput(true);
 
 		    // Execute request with no args
 			StringBuffer response = executeRequest (connection, args);	
+            if(response.length() == 0) {
+                return false;
+            }
+            return true;
 
-			// ---------------------
-			// PROCESS JSON RESPONSE
-			JSONObject respJson = new JSONObject(response.toString());
-			JSONObject idObj = respJson.getJSONObject("_id");
-			String uid = idObj.getString("$oid");
-			return uid;
+		} catch (Exception e) {
+			e.printStackTrace();
+			return false;
+	    // Ensure that the connection closes
+		} finally {
+			if(connection != null) {
+				connection.disconnect();
+			}
+		}
+	}
 
+	/**
+	 * Allows the user to toggle their period status
+	 */
+	public static String predict (String username) {
+		HttpURLConnection connection = null;
+
+		String args = "predict";
+
+		try {
+			//Create connection
+			URL url = new URL(HOST + "users/" + username);
+			connection = (HttpURLConnection)url.openConnection();
+			connection.setRequestMethod("POST");
+	    	connection.setDoOutput(true);
+
+		    // Execute request with no args
+			StringBuffer response = executeRequest (connection, args);	
+            String responseStr = response.toString();
+            String firstTwoChars = responseStr.substring(0,2);
+            if(firstTwoChars.equals(NA)) {
+                //TODO: Figure out how they want the data
+                System.out.println(responseStr);
+                return null;
+            }
+            return responseStr;
 
 		} catch (Exception e) {
 			e.printStackTrace();
@@ -112,48 +143,184 @@ public class ServerCom
 		}
 	}
 
-
-
 	/**
-	 * Gets an array of tasks with descriptions and assignees 
-	 */
-	public static Task[] getTasks (String apt_id) {
-	  HttpURLConnection connection = null;
+	 * Returns if user is on period
+     */
+	public static boolean status(String username) {
+		HttpURLConnection connection = null;
 
-	  try {
-	    //Create connection
-	    URL url = new URL(HOST + "tasks/" + apt_id);
-	    connection = (HttpURLConnection)url.openConnection();
-	    connection.setRequestMethod("GET");
+		String args = "status";
 
-	    // Execute request with no args
-		StringBuffer response = executeRequest (connection, null);	
+		try {
+			//Create connection
+			URL url = new URL(HOST + "users/" + username);
+			connection = (HttpURLConnection)url.openConnection();
+			connection.setRequestMethod("POST");
+	    	connection.setDoOutput(true);
 
-		// ---------------------
-		// PROCESS JSON RESPONSE
-		JSONObject respJson = new JSONObject(response.toString());
-		JSONArray arr = respJson.getJSONArray("tasks");
-		String[] descriptions = new String[arr.length()];
-		String[] assignees = new String[arr.length()];
-		Task[] toReturn = new Task[arr.length()];
-		for (int i = 0; i < arr.length(); i++)
-		{
-			JSONObject cur = arr.getJSONObject(i);
-			descriptions[i] = cur.getString("description");
-			assignees[i] = cur.getString("assignee");
-			toReturn[i] = new Task(assignees[i], descriptions[i]);
-		}
- 		return toReturn;
+		    // Execute request with no args
+			StringBuffer response = executeRequest (connection, args);	
+            String responseStr = response.toString();
+            if(responseStr.equals("false")) {
+                return false;
+            } else if(responseStr.equals("true")) {
+                return true;
+            } else {
+                System.out.println("Behavior Not Expected\n");
+                System.out.println(responseStr);
+                return false;
+            }
 
- 		// Handle null errors on return
-	  } catch (Exception e) {
-	    e.printStackTrace();
-	    return null;
+		} catch (Exception e) {
+			e.printStackTrace();
+			return false;
 	    // Ensure that the connection closes
-	  } finally {
-	    if(connection != null) {
-	      connection.disconnect();
-	    }
-	  }
+		} finally {
+			if(connection != null) {
+				connection.disconnect();
+			}
+		}
 	}
+    /**
+     * Allows the user to send sensor data to the server
+     */
+    public static void sendSensorData(String username, float temperature, 
+            float heartRate) {
+    
+		HttpURLConnection connection = null;
+
+		String args = "sensor=" + temperature + "," + heartRate;
+
+		try {
+			//Create connection
+			URL url = new URL(HOST + "users/" + username);
+			connection = (HttpURLConnection)url.openConnection();
+			connection.setRequestMethod("POST");
+	    	connection.setDoOutput(true);
+
+		    // Execute request with no args
+			StringBuffer response = executeRequest (connection, args);	
+
+		} catch (Exception e) {
+			e.printStackTrace();
+	    // Ensure that the connection closes
+		} finally {
+			if(connection != null) {
+				connection.disconnect();
+			}
+		}
+    }
+
+
+    /**
+     * Allows the user to send mood data to the server
+     */
+    public static void sendMoodData(String username, int mood) {
+    
+		HttpURLConnection connection = null;
+
+		String args = "mood=" + mood;
+
+		try {
+			//Create connection
+			URL url = new URL(HOST + "users/" + username);
+			connection = (HttpURLConnection)url.openConnection();
+			connection.setRequestMethod("POST");
+	    	connection.setDoOutput(true);
+
+		    // Execute request with no args
+			StringBuffer response = executeRequest (connection, args);	
+
+		} catch (Exception e) {
+			e.printStackTrace();
+	    // Ensure that the connection closes
+		} finally {
+			if(connection != null) {
+				connection.disconnect();
+			}
+		}
+    }
+//	/**
+//	 * Allow user to sign in and get their User ID
+//	 */
+//	public static String signIn (String username, String password) {
+//		HttpURLConnection connection = null;
+//
+//		// Define arguments
+//		username = "username=" + username;
+//		password = "password=" + password;
+//
+//		String args = username + "&" + password;
+//
+//		try {
+//			//Create connection
+//			URL url = new URL(HOST + "login/");
+//			connection = (HttpURLConnection)url.openConnection();
+//			connection.setRequestMethod("POST");
+//	    	connection.setDoOutput(true);
+//
+//		    // Execute request with no args
+//			StringBuffer response = executeRequest (connection, args);	
+//
+//			// ---------------------
+//			// PROCESS JSON RESPONSE
+//			JSONObject respJson = new JSONObject(response.toString());
+//			JSONObject idObj = respJson.getJSONObject("_id");
+//			String uid = idObj.getString("$oid");
+//			return uid;
+//
+//
+//		} catch (Exception e) {
+//			e.printStackTrace();
+//			return null;
+//	    // Ensure that the connection closes
+//		} finally {
+//			if(connection != null) {
+//				connection.disconnect();
+//			}
+//		}
+//	}
+//
+//	/**
+//	 * Gets an array of tasks with descriptions and assignees 
+//	 */
+//	public static Task[] getTasks (String apt_id) {
+//	  HttpURLConnection connection = null;
+//
+//	  try {
+//	    //Create connection
+//	    URL url = new URL(HOST + "tasks/" + apt_id);
+//	    connection = (HttpURLConnection)url.openConnection();
+//	    connection.setRequestMethod("GET");
+//
+//	    // Execute request with no args
+//		StringBuffer response = executeRequest (connection, null);	
+//
+//		// ---------------------
+//		// PROCESS JSON RESPONSE
+//		JSONObject respJson = new JSONObject(response.toString());
+//		JSONArray arr = respJson.getJSONArray("tasks");
+//		String[] descriptions = new String[arr.length()];
+//		String[] assignees = new String[arr.length()];
+//		Task[] toReturn = new Task[arr.length()];
+//		for (int i = 0; i < arr.length(); i++)
+//		{
+//			JSONObject cur = arr.getJSONObject(i);
+//			descriptions[i] = cur.getString("description");
+//			assignees[i] = cur.getString("assignee");
+//			toReturn[i] = new Task(assignees[i], descriptions[i]);
+//		}
+// 		return toReturn;
+//
+// 		// Handle null errors on return
+//	  } catch (Exception e) {
+//	    e.printStackTrace();
+//	    return null;
+//	    // Ensure that the connection closes
+//	  } finally {
+//	    if(connection != null) {
+//	      connection.disconnect();
+//	    }
+//	  }
+//	}
 }
