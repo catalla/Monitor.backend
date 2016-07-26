@@ -113,16 +113,15 @@ def period_status(user):
 # Return what day of period, null if not on
 def period_day(user):
   pid = user["cur_period"]
+  if(pid == None):
+      return -1
   period = mongo.db.Periods.find_one({"_id": pid})
-  if(period["end"] != None):
-      return None
   start = datetime.datetime.strptime(period["start"], "%Y-%m-%d")
-  curDay = datetime.date.today().isoformat()
-  end = datetime.datetime.strptime(curDay, "%Y-%m-%d")
+  curDay = datetime.date.today()
 
   # Keep valid logs over 0 days
-  diff = end - start
-  return diff
+  diff = curDay - start
+  return diff.days
 
 
 
