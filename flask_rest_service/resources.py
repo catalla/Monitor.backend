@@ -39,10 +39,13 @@ def period_toggle(user):
   period["end"] = curDay
 
   # Check whether valid log
-  if period_validate(user, period):
+  if period_validate(user, period) != None:
     mongo.db.Periods.update({"_id": pid}, period)
     user["cur_period"] = None
+    user = period_update_expectations(user, period)
     mongo.db.Users.update({"username": user["username"]}, user)
+
+  # Period was 0 days, disregard entry
   else:
     mongo.db.Periods.remove({"_id": pid})
     user["cur_period"] = None
@@ -52,9 +55,31 @@ def period_toggle(user):
 
 
 
-# Apptempt to filter out mistake logging
+# Update expected values for duration and separation
+def period_update_expectations(user, period):
+  # Update expected length of period
+  start = datetime.datetime.strptime(period["start"], "%Y-%m-%d")
+  end = datetime.datetime.strptime(period["end"], "%Y-%m-%d")
+  dur = end - start
+  user["avg_len"] =
+    (user["avg_len"]*user["len_sample"] + dur)/user["len_sample"]+1
+  user["len_sample"] += 1
+
+  # Update expected separation between periods
+  if len(user["periods"]) >= 2:
+    prev_pid = user["periods"][len(user["periods"])-2]
+    prev_period = mongo.db.Periods.find_one({"_id": last_pid})
+    prev_start = datetime.datetime.strptime(last_period["start"] , "%Y-%m-%d")
+    diff = start - prev_start
+    user["avg_sep"] =
+    (user["avg_sep"]*user["sep_sample"] + dur)/user["sep_sample"]+1
+    user["sep_sample"] += 1
+  return user
+
+
+
+# Attempt to filter out mistake logging
 def period_validate(user, period):
-  avg_len = user["avg_len"]
   start = datetime.datetime.strptime(period["start"], "%Y-%m-%d")
   end = datetime.datetime.strptime(period["end"], "%Y-%m-%d")
 
@@ -84,6 +109,17 @@ def period_predict(user):
 # Return whether or not currently on period
 def period_status(user):
   return user["cur_period"] != None
+
+
+
+# Return what day of period, null if not on
+def period_day(user):
+
+
+
+# Log today's mood
+def stats_mood(user):
+
 
 
 
