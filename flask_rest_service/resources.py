@@ -202,10 +202,11 @@ class Users(restful.Resource):
           return mongo.db.Users.find_one({"username": username})
 
         # Update status of days until period
-        if period_predict()[0:3] != 'na:':
-          next_start = datetime.datetime.strptime(period_predict(), "%Y-%m-%d")
-          curDay = datetime.date.today()
-          days_until = (next_start - curDay).days
+        if period_predict(pre_exist)[0:3] != 'na:':
+          next_start = datetime.datetime.strptime(period_predict(pre_exist), "%Y-%m-%d")
+          curDay = datetime.datetime.today()
+          pre_exist['days_until'] = (next_start - curDay).days
+          mongo.db.Users.update({"username": username}, pre_exist)
 
         # Return pre_existing user info
         return pre_exist
