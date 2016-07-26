@@ -120,7 +120,7 @@ def period_day(user):
   curDay = datetime.date.today()
 
   # Keep valid logs over 0 days
-  diff = curDay - start
+  diff = (curDay - start)+1
   return diff.days
 
 
@@ -130,6 +130,37 @@ def stats_mood(user):
   return 1
 
 
+
+# Log today's sensor data
+def stats_sensor(user):
+  return 1
+
+
+
+# Create a stats entry for the day if not already done
+def stats_create_day(user):
+  return 1
+
+
+# Check current period status, update in stats doc
+def stats_update_status(user):
+  return 1
+
+# Return dump of all stats for this user
+def stats_get_all(user):
+  return 1
+
+# Return dump of stats in date range for this user
+def stats_get_range(user):
+  return 1
+
+# Return the date of the previous period start
+def period_prev(user):
+  return 1
+  
+# Return a tip if period is one or two days away
+def user_tip(user):
+  return 1
 
 
 # Use this to give the controller user information based on username
@@ -143,6 +174,13 @@ class Users(restful.Resource):
         self.parser.add_argument('predict', type=str, required=False) 
         self.parser.add_argument('status', type=str, required=False) 
         self.parser.add_argument('day', type=str, required=False)
+        self.parser.add_argument('tip', type=str, required=False)
+        self.parser.add_argument('prev', type=str, required=False)
+        self.parser.add_argument('get_range', type=str, required=False)
+        self.parser.add_argument('get_all', type=str, required=False)
+        self.parser.add_argument('sensor', type=str, required=False)
+        self.parser.add_argument('mood', type=str, required=False)
+
         super(Users, self).__init__()
 
     # Get user info or create new user
@@ -172,7 +210,7 @@ class Users(restful.Resource):
         args = self.parser.parse_args()
         nargs = len(args) - sum([args[x]==None for x in args])
         if nargs > 1:
-          return "Select exactly one option"
+          return None
 
         # Get user info to edit
         user = self.get(username)
@@ -185,8 +223,20 @@ class Users(restful.Resource):
           return period_status(user)
         if args['day'] != None:
           return period_day(user)
+        if args['tip'] != None:
+          return user_tip(user)
+        if args['prev'] != None:
+          return period_prev(user)
+        if args['get_range'] != None:
+          return stats_get_range(user)
+        if args['get_all'] != None:
+          return stats_get_all(user)
+        if args['mood'] != None:
+          return stats_mood(user)
+        if args['sensor'] != None:
+          return stats_sensor(user)
         else:
-          return "Internal Server Error: Could not parse args"
+          return None
 
 
 # Return status information about the server
@@ -195,6 +245,7 @@ class Root(restful.Resource):
         return {
             'status': 'OK',
             'oneweek': 'winners',
+            'Best Coders': 'Jesse and Chad',
             'mongo': str(mongo.db),
         }
 
