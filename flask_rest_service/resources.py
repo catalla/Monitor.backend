@@ -143,6 +143,7 @@ class Users(restful.Resource):
         self.parser.add_argument('toggle', type=str, required=False)
         self.parser.add_argument('predict', type=str, required=False) 
         self.parser.add_argument('status', type=str, required=False) 
+        self.parser.add_argument('day', type=str, require=False)
         super(Users, self).__init__()
 
     # Get user info or create new user
@@ -183,6 +184,8 @@ class Users(restful.Resource):
           return period_predict(user)
         if args['status'] != None:
           return period_status(user)
+        if args['day'] != None:
+          return period_day(user)
         else:
           return "Internal Server Error: Could not parse args"
 
