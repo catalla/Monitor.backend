@@ -24,7 +24,7 @@ def period_toggle(user):
   if user['cur_period'] == None:
     new_period = {
       "start": curDay,
-      "end:": None
+      "end": None
     }
     # Update user's array of period info to include this new one
     pid = mongo.db.Periods.insert(new_period)
@@ -39,7 +39,7 @@ def period_toggle(user):
   period["end"] = curDay
 
   # Check whether valid log
-  if period_validate(user, period) != None:
+  if period_validate(user, period) == True:
     mongo.db.Periods.update({"_id": pid}, period)
     user["cur_period"] = None
     user = period_update_expectations(user, period)
@@ -49,7 +49,7 @@ def period_toggle(user):
   else:
     mongo.db.Periods.remove({"_id": pid})
     user["cur_period"] = None
-    user["periods"].remove(pid)
+    user["periods"] = user["periods"][:-1]
     mongo.db.Users.update({"username": user["username"]}, user)
   return user
 
@@ -90,7 +90,7 @@ def period_validate(user, period):
 # Return next predicted period
 def period_predict(user):
   if len(user["periods"]) < 1:
-    return "You must log a period before prediction is enabled."
+    return "na: You must log a period before prediction is enabled."
 
   # Look at most recent period start date to predict next start date
   last_pid = user["periods"][len(user["periods"])-1]
@@ -118,21 +118,20 @@ def period_day(user):
   period = mongo.db.Periods.find_one({"_id": pid})
   start = datetime.datetime.strptime(period["start"], "%Y-%m-%d")
   curDay = datetime.date.today()
-
-  # Keep valid logs over 0 days
+  # return num of days
   diff = (curDay - start)+1
   return diff.days
 
 
 
 # Log today's mood
-def stats_mood(user):
+def stats_mood(user, mood):
   return 1
 
 
 
 # Log today's sensor data
-def stats_sensor(user):
+def stats_sensor(user, sensor):
   return 1
 
 
@@ -195,11 +194,18 @@ class Users(restful.Resource):
               "avg_sep": 28,
               "sep_sample": 1,
               "avg_len": 4,
-              "len_sample": 1
+              "len_sample": 1,
+              "days_until": 28
             }
           # Return user info
           mongo.db.Users.insert(new_user)
           return mongo.db.Users.find_one({"username": username})
+
+        # Update status of days until period
+        if period_predict()[0:3] != 'na:':
+          next_start = datetime.datetime.strptime(period_predict(), "%Y-%m-%d")
+          curDay = datetime.date.today()
+          days_until = (next_start - curDay).days
 
         # Return pre_existing user info
         return pre_exist
@@ -232,9 +238,9 @@ class Users(restful.Resource):
         if args['get_all'] != None:
           return stats_get_all(user)
         if args['mood'] != None:
-          return stats_mood(user)
+          return stats_mood(user, args['mood'])
         if args['sensor'] != None:
-          return stats_sensor(user)
+          return stats_sensor(user, args['sensor'])
         else:
           return None
 
