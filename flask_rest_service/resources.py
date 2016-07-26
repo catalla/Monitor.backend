@@ -61,8 +61,7 @@ def period_update_expectations(user, period):
   start = datetime.datetime.strptime(period["start"], "%Y-%m-%d")
   end = datetime.datetime.strptime(period["end"], "%Y-%m-%d")
   dur = end - start
-  user["avg_len"] =
-    (user["avg_len"]*user["len_sample"] + dur)/user["len_sample"]+1
+  user["avg_len"] = (user["avg_len"]*user["len_sample"] + dur)/user["len_sample"]+1
   user["len_sample"] += 1
 
   # Update expected separation between periods
@@ -71,8 +70,7 @@ def period_update_expectations(user, period):
     prev_period = mongo.db.Periods.find_one({"_id": last_pid})
     prev_start = datetime.datetime.strptime(last_period["start"] , "%Y-%m-%d")
     diff = start - prev_start
-    user["avg_sep"] =
-    (user["avg_sep"]*user["sep_sample"] + dur)/user["sep_sample"]+1
+    user["avg_sep"] = (user["avg_sep"]*user["sep_sample"] + dur)/user["sep_sample"]+1
     user["sep_sample"] += 1
   return user
 
@@ -114,11 +112,13 @@ def period_status(user):
 
 # Return what day of period, null if not on
 def period_day(user):
+  return 1
 
 
 
 # Log today's mood
 def stats_mood(user):
+  return 1
 
 
 
