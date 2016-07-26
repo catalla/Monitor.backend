@@ -61,16 +61,16 @@ def period_update_expectations(user, period):
   start = datetime.datetime.strptime(period["start"], "%Y-%m-%d")
   end = datetime.datetime.strptime(period["end"], "%Y-%m-%d")
   dur = end - start
-  user["avg_len"] = (user["avg_len"]*user["len_sample"] + dur)/user["len_sample"]+1
+  user["avg_len"] = (user["avg_len"]*user["len_sample"] + dur.days)/user["len_sample"]+1
   user["len_sample"] += 1
 
   # Update expected separation between periods
   if len(user["periods"]) >= 2:
     prev_pid = user["periods"][len(user["periods"])-2]
-    prev_period = mongo.db.Periods.find_one({"_id": last_pid})
-    prev_start = datetime.datetime.strptime(last_period["start"] , "%Y-%m-%d")
+    prev_period = mongo.db.Periods.find_one({"_id": prev_pid})
+    prev_start = datetime.datetime.strptime(prev_period["start"] , "%Y-%m-%d")
     diff = start - prev_start
-    user["avg_sep"] = (user["avg_sep"]*user["sep_sample"] + dur)/user["sep_sample"]+1
+    user["avg_sep"] = (user["avg_sep"]*user["sep_sample"] + diff.days)/user["sep_sample"]+1
     user["sep_sample"] += 1
   return user
 
