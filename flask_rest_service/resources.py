@@ -6,6 +6,7 @@
 
 import json
 import datetime
+import random
 from flask import request, abort
 from flask.ext import restful
 from flask.ext.restful import reqparse
@@ -126,40 +127,100 @@ def period_day(user):
 
 # Log today's mood
 def stats_mood(user, mood):
-  return 1
+  day = stats_update_status(user)
+  day["stats"]["mood"] = (day["stats"]["mood"]*day["cnt_mood"] + int(mood))/day["cnt_mood"]+1
+  day["cnt_mood"] += 1
+  mongo.db.Stats.update({"date": curDay, "username": user["username"]}, day)
+  return True
 
 
 
 # Log today's sensor data
 def stats_sensor(user, sensor):
-  return 1
+  day = stats_update_status(user)
+  temp = float(sensor[:sensor.find(",")])
+  heart = float(sensor[sensor.find(",")+1:])
+
+  # Keep moving avg on temp for the day
+  day["stats"]["temp"] = (day["stats"]["temp"]*day["cnt_temp"] + temp)/day["cnt_temp"]+1
+  day["cnt_temp"] += 1
+
+  # Keep moving avg on heart rate for the day
+  day["stats"]["heart"] = (day["stats"]["heart"]*day["cnt_heart"] + heart)/day["cnt_heart"]+1
+  day["cnt_heart"] += 1
+
+  mongo.db.Stats.update({"date": curDay, "username": user["username"]}, day)
+  return True
 
 
 
 # Create a stats entry for the day if not already done
-def stats_create_day(user):
-  return 1
+def stats_create_day(user, day):
+  new_day = {
+    "username": user["username"],
+    "date": day,
+    "stats": {
+      "date": day,
+      "period": False,
+      "mood": 5,
+      "heart": 60,
+      "temp": 33
+    },
+    "cnt_mood": 0,
+    "cnt_heart": 0,
+    "cnt_temp": 0
+  }
+  mongo.db.Stats.insert(new_day)
+  return True
+
 
 
 # Check current period status, update in stats doc
 def stats_update_status(user):
-  return 1
+  curDay = datetime.date.today().isoformat()
+  if not mongo.db.Stats.find_one({"date": curDay, "username": user["username"]}):
+    stats_create_day(user, curDay)
+  day = mongo.db.Stats.find_one({"date": curDay, "username": user["username"]})
+  day['stats']['period'] = period_status
+  return day
+
+
 
 # Return dump of all stats for this user
 def stats_get_all(user):
+  for day in mongo.db.Stats.find({"date": curDay, "username": user["username"]}):
+    print "todo"
   return 1
+
+
 
 # Return dump of stats in date range for this user
 def stats_get_range(user):
   return 1
 
+
+
 # Return the date of the previous period start
 def period_prev(user):
-  return 1
+  if len(user["periods"]) < 1:
+    return "na: You must log a period before viewing past information."
+
+  # Look at most recent period start date to predict next start date
+  last_pid = user["periods"][len(user["periods"])-1]
+  last_period = mongo.db.Periods.find_one({"_id": last_pid})
+  last_start = last_period["start"]
+  last_end = last_period["end"]
+  return (last_start + " - " + last_end)
   
+
+
 # Return a tip if period is one or two days away
 def user_tip(user):
-  return 1
+  if user["days_until"] > 2:
+    return "na: Tips are generated within days of predicted period"
+  tips = ["Avoid salty foods such as chips in the week before your period", "Avoid sugary foods such as candy in the week before your period", "Avoid coffee, black tea, and other caffeine sources in the week before your period", "To reduce cramps, try gentle exercise, such as walking or swimming", "Regular exercise reduces period pain. Try joining a sports team!", "Dark chocolate may reduce menstrual cramping", "Make sure to stay hydrated, especially in the days during and before your period", "Avoid alcohol before and during your period", "Take ibuprofen the night before your period starts, to keep cramping to a minimum", "Menstrual pain? Try using a heating pad on your abdomen", "Raspberry leaf herbal tea can reduce cramping", "Take a hot bath to destress and reduce pain", "To keep blood sugar levels consistent, eat smaller meals more frequently rather than a few large meals", "Get plenty of sleep - around 8 hours - to reduce stress and other PMS symptoms", "Stress worsens PMS symptoms, so find your own source of stress relief, such as writing in a journal"]
+  return tips[random.randint(0,len(tips)-1)]
+  
 
 
 # Use this to give the controller user information based on username
