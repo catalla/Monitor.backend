@@ -14,113 +14,131 @@ from bson.objectid import ObjectId
 from bson.json_util import dumps as Bdumps
 from bson.json_util import loads as Bloads
 
-# Make one class for each type of major request
-class Emotions(restful.Resource):
+
+
+# Period collection resources
+def period_toggle(user):
+  curDay = datetime.date.today().isoformat()
+
+  # Check whether toggling on or off
+  if user['cur_period'] == None:
+    new_period = {
+      "start": curDay,
+      "end:": None
+    }
+    # Update user's array of period info to include this new one
+    pid = mongo.db.Periods.insert(new_period)
+    user["periods"].append(pid)
+    user["cur_period"] = pid
+    mongo.db.Users.update({"username": user["username"]}, user)
+    return user
+
+  # If toggling off, you are adding the end to a period
+  pid = user["cur_period"]
+  period = mongo.db.Periods.find_one({"_id": pid})
+  period["end"] = curDay
+
+  # Check whether valid log
+  if period_validate(user, period):
+    mongo.db.Periods.update({"_id": pid}, period)
+    user["cur_period"] = None
+    mongo.db.Users.update({"username": user["username"]}, user)
+  else:
+    mongo.db.Periods.remove({"_id": pid})
+    user["cur_period"] = None
+    user["periods"].remove(pid)
+    mongo.db.Users.update({"username": user["username"]}, user)
+  return user
+
+
+
+# Apptempt to filter out mistake logging
+def period_validate(user, period):
+  avg_len = user["avg_len"]
+  start = datetime.datetime.strptime(period["start"], "%Y-%m-%d")
+  end = datetime.datetime.strptime(period["end"], "%Y-%m-%d")
+
+  # Keep valid logs over 0 days
+  diff = end - start
+  return diff.days > 0
+
+
+
+# Return next predicted period
+def period_predict(user):
+  if len(user["periods"]) < 1:
+    return "You must log a period before prediction is enabled."
+
+  # Look at most recent period start date to predict next start date
+  last_pid = user["periods"][len(user["periods"])-1]
+  last_period = mongo.db.Periods.find_one({"_id": last_pid})
+  last_start = datetime.datetime.strptime(last_period["start"] , "%Y-%m-%d")
+
+  # Prediction is based on user's current estimated period separation
+  est_diff = datetime.timedelta(days=int(user["avg_sep"]))
+  prediction = last_start + est_diff
+  return datetime.datetime.strftime(prediction , "%Y-%m-%d")
+
+
+
+# Return whether or not currently on period
+def period_status(user):
+  return user["cur_period"] != None
+
+
+
+# Use this to give the controller user information based on username
+class Users(restful.Resource):
     def __init__(self, *args, **kwargs):
         self.parser = reqparse.RequestParser()
 
-        # Define what arguments to take for a new emotion entry
-        self.parser.add_argument('uid', type=str, required=True)
-        self.parser.add_argument('mood', type=str, required=True)
-        super(Emotions, self).__init__()
+        # ******************
+        # Flags definitions
+        self.parser.add_argument('toggle', type=str, required=False)
+        self.parser.add_argument('predict', type=str, required=False) 
+        self.parser.add_argument('status', type=str, required=False) 
+        super(Users, self).__init__()
 
-    # Return all collection entries
-    def get(self):
-        return [x for x in mongo.db.Emotions.find()]
-
-    # Add a new emotion entry
-    def post(self):
-        args = self.parser.parse_args()
-
-      	curTime = datetime.datetime.now().isoformat()
-
-        # Check whether updating or inserting
-        # If the document already exists, update it
-        if (mongo.db.Emotions.find_one({"uid": args["uid"]}) != None):
-            emotion_journal = (mongo.db.Emotions.find_one({"uid": args["uid"]}))
-            emotion_journal["emotions"].append((args["mood"], curTime))
-            mongo.db.Emotions.update({"uid": args["uid"]}, emotion_journal)
-
-        else:
-            new_entry = {
-              "uid":      args["uid"],
-              "emotions": [(args["mood"], curTime),]
+    # Get user info or create new user
+    def get(self, username):
+        # Make user if not pre-existing
+        pre_exist = mongo.db.Users.find_one({"username": username})
+        if pre_exist == None:
+          new_user = {
+              "username": username,
+              "periods": [],
+              "cur_period": None,
+              "avg_sep": 28,
+              "sep_sample": 1,
+              "avg_len": 4,
+              "len_sample": 1
             }
-            mongo.db.Emotions.insert(new_entry)
+          # Return user info
+          mongo.db.Users.insert(new_user)
+          return mongo.db.Users.find_one({"username": username})
 
-        return mongo.db.Emotions.find_one_or_404({"uid": args["uid"]})["_id"]
+        # Return pre_existing user info
+        return pre_exist
 
-
-# Use this to give the controller user information based on user ID
-class UserInfo(restful.Resource):
-    def get(self, user_id):
-        return mongo.db.Users.find_one_or_404({"_id": user_id})
-
-
-class Register(restful.Resource):
-    """Register a new user in the database.
-    user = {
-    "username":
-    "password":
-    }
-    """
-
-    def __init__(self):
-        self.parser = reqparse.RequestParser()
-
-        # Define what arguments to take for a new user
-        self.parser.add_argument('username', type=str, required=True)
-        self.parser.add_argument('password', type=str, required=True)
-
-    def get(self):
-        return [x for x in mongo.db.Users.find()]
-
-    def post(self):
+    # Either invoke toggle or predict next
+    def post(self, username):
+        # Parse args
         args = self.parser.parse_args()
+        nargs = len(args) - sum([args[x]==None for x in args])
+        if nargs > 1:
+          return "Select exactly one option"
 
-        if (mongo.db.Users.find_one({"username": args['username']}) != None):
-            return "Username is already taken!"
+        # Get user info to edit
+        user = self.get(username)
 
-        user = {
-            'username': args['username'],
-            'password': args['password'],
-            'emotions_id': 'none',
-            'periods_id': 'none'
-        }
-
-        return {
-            "_id": mongo.db.Users.insert(user),
-        }
-
-class Login(restful.Resource):
-    """Check if user is in the database, if it is, then log in.
-    username = string
-    password = string
-    """
-
-    def __init__(self):
-        self.parser = reqparse.RequestParser()
-
-        # Define what arguments to take for a new apartment
-        self.parser.add_argument('username', type=str, required=True)
-        self.parser.add_argument('password', type=str, required=True)
-        super(Login, self).__init__()
-
-    def get(self):
-        return [x for x in mongo.db.Users.find()]
-
-    def post(self):
-        args = self.parser.parse_args()
-
-        user = mongo.db.Users.find_one({"username": args['username']})
-        if user:
-            if user["password"] == args['password']:
-                return user
-            else:
-                return "Password is incorrect"
-
+        if args['toggle'] != None:
+          return period_toggle(user)
+        if args['predict'] != None:
+          return period_predict(user)
+        if args['status'] != None:
+          return period_status(user)
         else:
-            return "User not found"
+          return "Internal Server Error: Could not parse args"
 
 
 # Return status information about the server
@@ -133,7 +151,4 @@ class Root(restful.Resource):
         }
 
 api.add_resource(Root, '/')
-api.add_resource(Emotions, '/emotions/')
-api.add_resource(Register, '/register/')
-api.add_resource(Login, '/login/')
-api.add_resource(UserInfo, '/users/<ObjectId:user_id>')
+api.add_resource(Users, '/users/<username>')
