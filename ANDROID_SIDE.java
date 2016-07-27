@@ -181,6 +181,42 @@ public class ANDROID_SIDE
 			}
 		}
 	}
+
+    /**
+     * Returns what day of the user's period they are on.
+     */
+	public static int day(String username) {
+		HttpURLConnection connection = null;
+
+		String args = "day";
+
+		try {
+			//Create connection
+			URL url = new URL(HOST + "users/" + username);
+			connection = (HttpURLConnection)url.openConnection();
+			connection.setRequestMethod("POST");
+	    	connection.setDoOutput(true);
+
+		    // Execute request with no args
+			StringBuffer response = executeRequest (connection, args);	
+            String responseStr = response.toString();
+            int day = Integer.parseInt(responseStr);;
+            return day;
+		} catch (NumberFormatException e) {
+            System.out.println("Server returned a non-number for days");
+        }
+          catch (Exception e) {
+			e.printStackTrace();
+	    // Ensure that the connection closes
+		} finally {
+			if(connection != null) {
+				connection.disconnect();
+			}
+		}
+        return -1;
+	}
+
+
     /**
      * Allows the user to send sensor data to the server
      */

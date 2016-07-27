@@ -6,6 +6,7 @@
  	public static void main (String[] args)
  	{
         boolean status = true;
+        System.out.println("Jesse is on day " + ANDROID_SIDE.day("Jesse") + " of his period");
         if(!ANDROID_SIDE.toggle("Jesse")) {
             System.out.println("toggle called server code with wrong arguments");
             status = false;
@@ -21,7 +22,7 @@
 
         System.out.println("Jesse is on his period: " + ANDROID_SIDE.status("Jesse"));
 
-
+        System.out.println("Jesse is on day " + ANDROID_SIDE.day("Jesse") + " of his period");
 
 
 
