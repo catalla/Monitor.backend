@@ -207,7 +207,9 @@ def stats_get_list(user):
       diff = (end - start).days
       start = period["start"]
       end = period["end"]
-      results.append((start, end, diff))
+      curr = "{start : %s, end : %s, day : %d}" % (start, end, diff)
+      results.append(curr)
+      #results.append((sstart, end, diff))
   return results
 
 
