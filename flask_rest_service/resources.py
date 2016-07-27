@@ -151,7 +151,7 @@ def stats_symptoms(user, symptoms):
   # Acne, cramps, tired
   sympt_arr = symptoms.split(",")
   for val in range(len(sympt_arr)):
-    sympt_arr[val] = False if sympt_arr[val]=='False' else True
+    sympt_arr[val] = False if (sympt_arr[val]=='False' or sympt_arr[val]=="false") else True
 
   if len(sympt_arr) < 3:
     for x in range(3):
