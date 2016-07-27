@@ -145,6 +145,25 @@ def stats_mood(user, mood):
 
 
 
+# Log today's symptoms
+def stats_symptoms(user, symptoms):
+  day = stats_update_status(user)
+  # Acne, cramps, tired
+  sympt_arr = symptoms.split(",")
+  for val in range(len(sympt_arr)):
+    sympt_arr[val] = False if sympt_arr[val]=='False' else True
+
+  if len(sympt_arr) < 3:
+    for x in range(3):
+      sympt_arr.append(False)
+
+  day["symptoms"] = {"acne": bool(sympt_arr[0]), "cramps": bool(sympt_arr[1]), "tired": bool(sympt_arr[2])}
+  print day
+  mongo.db.Stats.update({"date": day["date"], "username": user["username"]}, day)
+  return True
+
+
+
 # Log today's sensor data
 def stats_sensor(user, sensor):
   day = stats_update_status(user)
@@ -175,6 +194,11 @@ def stats_create_day(user, day):
       "mood": 5,
       "heart": 60,
       "temp": 33
+    },
+    "symptoms": {
+      "acne": False,
+      "cramps": False,
+      "tired": False
     },
     "cnt_mood": 0,
     "cnt_heart": 0,
@@ -224,6 +248,18 @@ def stats_get_all(user):
 
 
 
+# Return dump of all symptoms for this user
+def stats_get_symptoms(user):
+  results = []
+  for day in mongo.db.Stats.find({"username": user["username"]}):
+    results.append(day["symptoms"])
+  if len(results) != 0:
+    return results
+  else:
+    return "na: You must log symptoms to get stats."
+
+
+
 # Return the date of the previous period start
 def period_prev(user):
   if len(user["periods"]) < 1 or (len(user["periods"]) == 1 and period_status(user)):
@@ -267,8 +303,10 @@ class Users(restful.Resource):
         self.parser.add_argument('tip', type=str, required=False)
         self.parser.add_argument('prev', type=str, required=False)
         self.parser.add_argument('get_all', type=str, required=False)
+        self.parser.add_argument('get_symptoms', type=str, required=False)
         self.parser.add_argument('get_list', type=str, required=False)
         self.parser.add_argument('sensor', type=str, required=False)
+        self.parser.add_argument('symptoms', type=str, required=False)
         self.parser.add_argument('mood', type=str, required=False)
 
         super(Users, self).__init__()
@@ -329,12 +367,16 @@ class Users(restful.Resource):
           return period_prev(user)
         if args['get_list'] != None:
           return stats_get_list(user)
+        if args['get_symptoms'] != None:
+          return stats_get_symptoms(user)
         if args['get_all'] != None:
           return stats_get_all(user)
         if args['mood'] != None:
           return stats_mood(user, args['mood'])
         if args['sensor'] != None:
           return stats_sensor(user, args['sensor'])
+        if args['symptoms'] != None:
+          return stats_symptoms(user, args['symptoms'])
         else:
           return None
 
