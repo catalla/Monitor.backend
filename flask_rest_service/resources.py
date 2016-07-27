@@ -102,7 +102,6 @@ def period_predict(user):
   est_diff = datetime.timedelta(days=int(user["avg_sep"]))
   prediction = last_start + est_diff
   mystr = datetime.datetime.strftime(prediction , "%Y-%m-%d")
-  mystr = '/'.join([str(int(x)) for x in mystr[5:].split('-')])
   return mystr
 
 
