@@ -111,6 +111,16 @@ def period_status(user):
 
 
 
+# Return what day the period started on, null if not on
+def period_start_date(user):
+  pid = user["cur_period"]
+  if(pid == None):
+    return "na: Not currently on period."
+  period = mongo.db.Periods.find_one({"_id": pid})
+  return period["start"]
+
+
+
 # Return what day of period, null if not on
 def period_day(user):
   pid = user["cur_period"]
@@ -253,6 +263,7 @@ class Users(restful.Resource):
         self.parser.add_argument('predict', type=str, required=False) 
         self.parser.add_argument('status', type=str, required=False) 
         self.parser.add_argument('day', type=str, required=False)
+        self.parser.add_argument('start_date', type=str, required=False)
         self.parser.add_argument('tip', type=str, required=False)
         self.parser.add_argument('prev', type=str, required=False)
         self.parser.add_argument('get_all', type=str, required=False)
@@ -308,6 +319,8 @@ class Users(restful.Resource):
           return period_predict(user)
         if args['status'] != None:
           return period_status(user)
+        if args['start_date'] != None:
+          return period_start_date(user)
         if args['day'] != None:
           return period_day(user)
         if args['tip'] != None:
