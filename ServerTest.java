@@ -24,6 +24,10 @@
 
         System.out.println("Jesse is on day " + ANDROID_SIDE.day("Jesse") + " of his period");
 
+        System.out.println("Jesse's previous period was " + ANDROID_SIDE.prev("Jesse"));
+
+        System.out.println("Our tip for Jesse is: " + ANDROID_SIDE.tip("Jesse"));
+
 
 
 

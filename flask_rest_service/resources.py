@@ -116,7 +116,8 @@ def period_day(user):
   pid = user["cur_period"]
   if(pid != None):
       return -1
-  period = mongo.db.Periods.find_one({"_id": pid})
+  last_pid = user["periods"][len(user["periods"])-1]
+  period = mongo.db.Periods.find_one({"_id": last_pid})
   start = datetime.datetime.strptime(period["start"], "%Y-%m-%d")
   curDay = datetime.date.today()
   # return num of days

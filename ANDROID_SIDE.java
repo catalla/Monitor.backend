@@ -184,6 +184,7 @@ public class ANDROID_SIDE
 
     /**
      * Returns what day of the user's period they are on.
+     * TODO: Currently doesn't work
      */
 	public static int day(String username) {
 		HttpURLConnection connection = null;
@@ -216,6 +217,91 @@ public class ANDROID_SIDE
         return -1;
 	}
 
+    /**
+     * Generates a tip for the user if their period is a few days away
+     */
+	public static String tip(String username) {
+		HttpURLConnection connection = null;
+
+		String args = "tip";
+
+		try {
+			//Create connection
+			URL url = new URL(HOST + "users/" + username);
+			connection = (HttpURLConnection)url.openConnection();
+			connection.setRequestMethod("POST");
+	    	connection.setDoOutput(true);
+
+		    // Execute request with no args
+			StringBuffer response = executeRequest (connection, args);	
+            String responseStr = response.toString();
+            String firstTwoChars = responseStr.substring(0,2);
+            if(firstTwoChars.equals(NA)) {
+                //TODO: Figure out how they want the data
+                return responseStr.substring(4);
+            }
+            return responseStr;
+
+		} catch (Exception e) {
+			e.printStackTrace();
+			return null;
+	    // Ensure that the connection closes
+		} finally {
+			if(connection != null) {
+				connection.disconnect();
+			}
+		}
+	}
+
+    /**
+     *
+     */
+    public static String prev(String username) {
+		HttpURLConnection connection = null;
+
+		String args = "prev";
+
+		try {
+			//Create connection
+			URL url = new URL(HOST + "users/" + username);
+			connection = (HttpURLConnection)url.openConnection();
+			connection.setRequestMethod("POST");
+	    	connection.setDoOutput(true);
+
+		    // Execute request with no args
+			StringBuffer response = executeRequest (connection, args);	
+            String responseStr = response.toString();
+            String firstTwoChars = responseStr.substring(0,2);
+            if(firstTwoChars.equals(NA)) {
+                //TODO: Figure out how they want the data
+                return responseStr.substring(4);
+            }
+            return responseStr;
+
+		} catch (Exception e) {
+			e.printStackTrace();
+			return null;
+	    // Ensure that the connection closes
+		} finally {
+			if(connection != null) {
+				connection.disconnect();
+			}
+		}
+    }
+
+    /**
+     *
+     */
+    public static String get_range(String username) {
+        return null;    
+    }
+
+    /**
+     *
+     */
+    public static String get_all(String username) {
+        return null;
+    }
 
     /**
      * Allows the user to send sensor data to the server
