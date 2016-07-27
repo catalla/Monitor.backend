@@ -198,12 +198,6 @@ def stats_get_all(user):
 
 
 
-# Return dump of stats in date range for this user
-def stats_get_range(user):
-  return 1
-
-
-
 # Return the date of the previous period start
 def period_prev(user):
   if len(user["periods"]) < 1 or (len(user["periods"]) == 1 and period_status(user)):
@@ -245,7 +239,6 @@ class Users(restful.Resource):
         self.parser.add_argument('day', type=str, required=False)
         self.parser.add_argument('tip', type=str, required=False)
         self.parser.add_argument('prev', type=str, required=False)
-        self.parser.add_argument('get_range', type=str, required=False)
         self.parser.add_argument('get_all', type=str, required=False)
         self.parser.add_argument('sensor', type=str, required=False)
         self.parser.add_argument('mood', type=str, required=False)
@@ -304,8 +297,6 @@ class Users(restful.Resource):
           return user_tip(user)
         if args['prev'] != None:
           return period_prev(user)
-        if args['get_range'] != None:
-          return stats_get_range(user)
         if args['get_all'] != None:
           return stats_get_all(user)
         if args['mood'] != None:
