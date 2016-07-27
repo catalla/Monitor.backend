@@ -188,9 +188,13 @@ def stats_update_status(user):
 
 # Return dump of all stats for this user
 def stats_get_all(user):
-  for day in mongo.db.Stats.find({"date": curDay, "username": user["username"]}):
-    print "todo"
-  return 1
+  results = []
+  for day in mongo.db.Stats.find({"username": user["username"]}):
+    results.append(day["stats"])
+  if len(results) != 0:
+    return results
+  else:
+    return "na: You must log mood or sensor info to get stats."
 
 
 
