@@ -62,7 +62,7 @@ def period_update_expectations(user, period):
   start = datetime.datetime.strptime(period["start"], "%Y-%m-%d")
   end = datetime.datetime.strptime(period["end"], "%Y-%m-%d")
   dur = end - start
-  user["avg_len"] = (user["avg_len"]*user["len_sample"] + dur.days)/user["len_sample"]+1
+  user["avg_len"] = (user["avg_len"]*user["len_sample"] + dur.days)/(user["len_sample"]+1)
   user["len_sample"] += 1
 
   # Update expected separation between periods
@@ -71,7 +71,7 @@ def period_update_expectations(user, period):
     prev_period = mongo.db.Periods.find_one({"_id": prev_pid})
     prev_start = datetime.datetime.strptime(prev_period["start"] , "%Y-%m-%d")
     diff = start - prev_start
-    user["avg_sep"] = (user["avg_sep"]*user["sep_sample"] + diff.days)/user["sep_sample"]+1
+    user["avg_sep"] = (user["avg_sep"]*user["sep_sample"] + diff.days)/(user["sep_sample"]+1)
     user["sep_sample"] += 1
   return user
 
@@ -118,19 +118,19 @@ def period_day(user):
       return -1
   period = mongo.db.Periods.find_one({"_id": pid})
   start = datetime.datetime.strptime(period["start"], "%Y-%m-%d")
-  curDay = datetime.date.today()
+  curDay = datetime.datetime.today()
   # return num of days
-  diff = (curDay - start)+1
-  return diff.days
+  diff = (curDay - start).days+1
+  return diff
 
 
 
 # Log today's mood
 def stats_mood(user, mood):
   day = stats_update_status(user)
-  day["stats"]["mood"] = (day["stats"]["mood"]*day["cnt_mood"] + int(mood))/day["cnt_mood"]+1
+  day["stats"]["mood"] = (day["stats"]["mood"]*day["cnt_mood"] + int(mood))/(day["cnt_mood"]+1)
   day["cnt_mood"] += 1
-  mongo.db.Stats.update({"date": curDay, "username": user["username"]}, day)
+  mongo.db.Stats.update({"date": day["date"], "username": user["username"]}, day)
   return True
 
 
@@ -142,14 +142,14 @@ def stats_sensor(user, sensor):
   heart = float(sensor[sensor.find(",")+1:])
 
   # Keep moving avg on temp for the day
-  day["stats"]["temp"] = (day["stats"]["temp"]*day["cnt_temp"] + temp)/day["cnt_temp"]+1
+  day["stats"]["temp"] = (day["stats"]["temp"]*day["cnt_temp"] + temp)/(day["cnt_temp"]+1)
   day["cnt_temp"] += 1
 
   # Keep moving avg on heart rate for the day
-  day["stats"]["heart"] = (day["stats"]["heart"]*day["cnt_heart"] + heart)/day["cnt_heart"]+1
+  day["stats"]["heart"] = (day["stats"]["heart"]*day["cnt_heart"] + heart)/(day["cnt_heart"]+1)
   day["cnt_heart"] += 1
 
-  mongo.db.Stats.update({"date": curDay, "username": user["username"]}, day)
+  mongo.db.Stats.update({"date": day["date"], "username": user["username"]}, day)
   return True
 
 
@@ -181,7 +181,7 @@ def stats_update_status(user):
   if not mongo.db.Stats.find_one({"date": curDay, "username": user["username"]}):
     stats_create_day(user, curDay)
   day = mongo.db.Stats.find_one({"date": curDay, "username": user["username"]})
-  day['stats']['period'] = period_status
+  day['stats']['period'] = period_status(user)
   return day
 
 
