@@ -186,6 +186,22 @@ def stats_update_status(user):
 
 
 
+# Return dump of all period dates for this user
+def stats_get_list(user):
+  results = []
+  for pid in user["periods"]:
+    period = mongo.db.Periods.find_one({"_id": pid})
+    if period["end"] != None:
+      start = datetime.datetime.strptime(period["start"], "%Y-%m-%d")
+      end = datetime.datetime.strptime(period["end"], "%Y-%m-%d")
+      diff = (end - start).days
+      start = period["start"]
+      end = period["end"]
+      results.append((start, end, diff))
+  return results
+
+
+
 # Return dump of all stats for this user
 def stats_get_all(user):
   results = []
@@ -240,6 +256,7 @@ class Users(restful.Resource):
         self.parser.add_argument('tip', type=str, required=False)
         self.parser.add_argument('prev', type=str, required=False)
         self.parser.add_argument('get_all', type=str, required=False)
+        self.parser.add_argument('get_list', type=str, required=False)
         self.parser.add_argument('sensor', type=str, required=False)
         self.parser.add_argument('mood', type=str, required=False)
 
@@ -297,6 +314,8 @@ class Users(restful.Resource):
           return user_tip(user)
         if args['prev'] != None:
           return period_prev(user)
+        if args['get_list'] != None:
+          return stats_get_list(user)
         if args['get_all'] != None:
           return stats_get_all(user)
         if args['mood'] != None:
