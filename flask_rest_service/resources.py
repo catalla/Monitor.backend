@@ -257,7 +257,7 @@ def stats_get_all(user):
 # Return dump of today's symptoms for this user
 def stats_get_symptoms(user):
   day = stats_update_status()
-    return results["symptoms"]
+  return results["symptoms"]
 
 
 
@@ -275,6 +275,8 @@ def period_prev(user):
   last_period = mongo.db.Periods.find_one({"_id": last_pid})
   last_start = last_period["start"]
   last_end = last_period["end"]
+
+  print last_start
   return_string = str(last_start) + " - " + str(last_end)
   return return_string
   
