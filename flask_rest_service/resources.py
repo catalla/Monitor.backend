@@ -206,9 +206,12 @@ def stats_get_list(user):
       end = datetime.datetime.strptime(period["end"], "%Y-%m-%d")
       diff = (end - start).days
       start = period["start"]
-      end = period["end"]
-      curr = "{start : %s, end : %s, day : %d}" % (start, end, diff)
-      results.append(curr)
+      data = {}
+      data['start'] = start
+      data['end'] = end
+      data['day'] = diff
+      json_data = json.dumps(data)
+      results.append(json_data)
       #results.append((sstart, end, diff))
   return results
 
