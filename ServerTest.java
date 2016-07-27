@@ -1,6 +1,7 @@
  /**
   *	Unit tests for all controller functions
   */
+ import java.util.ArrayList;
  public class ServerTest
  {
  	public static void main (String[] args)
@@ -28,8 +29,12 @@
 
         System.out.println("Our tip for Jesse is: " + ANDROID_SIDE.tip("Jesse"));
 
+        ArrayList<PeriodCalendarEntry> entries = ANDROID_SIDE.get_all("Jesse");
+        for(PeriodCalendarEntry entry : entries) {
+            System.out.println(entry);
+        }
 
-
+        ArrayList<PeriodListEntry> listEntries = ANDROID_SIDE.get_list("Jesse");
 
 
 
