@@ -256,8 +256,8 @@ def stats_get_all(user):
 
 # Return dump of today's symptoms for this user
 def stats_get_symptoms(user):
-  day = stats_update_status()
-  return results["symptoms"]
+  day = stats_update_status(user)
+  return day["symptoms"]
 
 
 
