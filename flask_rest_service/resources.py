@@ -276,8 +276,10 @@ def period_prev(user):
   last_start = last_period["start"]
   last_end = last_period["end"]
 
-  print last_start
-  return_string = str(last_start) + " - " + str(last_end)
+  start = '/'.join([str(int(x)) for x in last_start[5:].split('-')])
+  end = '/'.join([str(int(x)) for x in last_end[5:].split('-')])
+
+  return_string = str(start) + " - " + str(end)
   return return_string
   
 
