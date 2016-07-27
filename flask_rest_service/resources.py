@@ -157,7 +157,7 @@ def stats_symptoms(user, symptoms):
     for x in range(3):
       sympt_arr.append(False)
 
-  day["symptoms"] = {"acne": bool(sympt_arr[0]), "cramps": bool(sympt_arr[1]), "tired": bool(sympt_arr[2])}
+  day["symptoms"] = {"date": day["date"], "acne": bool(sympt_arr[0]), "cramps": bool(sympt_arr[1]), "tired": bool(sympt_arr[2])}
   print day
   mongo.db.Stats.update({"date": day["date"], "username": user["username"]}, day)
   return True
@@ -196,6 +196,7 @@ def stats_create_day(user, day):
       "temp": 33
     },
     "symptoms": {
+      "date": day,
       "acne": False,
       "cramps": False,
       "tired": False
