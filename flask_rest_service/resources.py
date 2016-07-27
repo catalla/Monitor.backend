@@ -202,15 +202,20 @@ def stats_get_range(user):
 
 # Return the date of the previous period start
 def period_prev(user):
-  if len(user["periods"]) < 1:
+  if len(user["periods"]) < 1 or (len(user["periods"]) == 1 and period_status(user)):
     return "na: You must log a period before viewing past information."
 
   # Look at most recent period start date to predict next start date
-  last_pid = user["periods"][len(user["periods"])-1]
+  if period_status(user):
+    last_pid = user["periods"][len(user["periods"])-2]
+  else:
+    last_pid = user["periods"][len(user["periods"])-1]
+
   last_period = mongo.db.Periods.find_one({"_id": last_pid})
   last_start = last_period["start"]
   last_end = last_period["end"]
-  return (last_start + " - " + last_end)
+  return_string = str(last_start) + " - " + str(last_end)
+  return return_string
   
 
 
