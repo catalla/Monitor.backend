@@ -254,15 +254,10 @@ def stats_get_all(user):
 
 
 
-# Return dump of all symptoms for this user
+# Return dump of today's symptoms for this user
 def stats_get_symptoms(user):
-  results = []
-  for day in mongo.db.Stats.find({"username": user["username"]}):
-    results.append(day["symptoms"])
-  if len(results) != 0:
-    return results
-  else:
-    return "na: You must log symptoms to get stats."
+  day = stats_update_status()
+    return results["symptoms"]
 
 
 
