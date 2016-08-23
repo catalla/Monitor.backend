@@ -236,8 +236,7 @@ def stats_get_list(user):
       data['start'] = start
       data['end'] = end
       data['days'] = diff
-      json_data = json.dumps(data)
-      results.append(json_data)
+      results.append(data)
       #results.append((sstart, end, diff))
   return results
 
