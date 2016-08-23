@@ -232,6 +232,7 @@ def stats_get_list(user):
       end = datetime.datetime.strptime(period["end"], "%Y-%m-%d")
       diff = (end - start).days
       start = period["start"]
+      end = period["end"];
       data = {}
       data['start'] = start
       data['end'] = end
